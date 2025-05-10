@@ -1,16 +1,23 @@
 package com.project.accounts.services.impl;
 
 import com.project.accounts.constants.AccountConstants;
+import com.project.accounts.dtos.AccountDto;
 import com.project.accounts.dtos.CustomerDto;
 import com.project.accounts.entities.Account;
 import com.project.accounts.entities.Customer;
 import com.project.accounts.exceptions.CustomerAlreadyExistsException;
+import com.project.accounts.exceptions.ResourceNotFoundException;
+import com.project.accounts.mappers.AccountMapper;
 import com.project.accounts.mappers.CustomerMapper;
 import com.project.accounts.repositories.AccountRepository;
 import com.project.accounts.repositories.CustomerRepository;
 import com.project.accounts.services.IAccountService;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -30,16 +37,56 @@ public  class AccountServiceProcessImpl implements IAccountService {
      */
     @Override
     public void createAccount(CustomerDto customerDto) {
-        Customer customer = CustomerMapper.mapToCustomer(customerDto, new Customer());
+        Customer createdCustomer = CustomerMapper.mapToCustomer(customerDto, new Customer());
         Optional<Customer> optionalCustomer = customerRepository.findByMobileNumber(customerDto.getMobileNumber());
         if(optionalCustomer.isPresent()) {
             throw new CustomerAlreadyExistsException("Customer already registered with given mobileNumber "
                     +customerDto.getMobileNumber());
         }
-        customer.setCreatedAt(LocalDateTime.now());
-        customer.setCreatedBy("Anonymous");
-        Customer savedCustomer = customerRepository.save(customer);
+        createdCustomer.setCreatedAt(LocalDateTime.now());
+        createdCustomer.setCreatedBy("Anonymous");
+        Customer savedCustomer = customerRepository.save(createdCustomer);
         accountRepository.save(createNewAccount(savedCustomer));
+    }
+
+    /**
+     * 
+     * @param mobileNumber
+     * @return
+     */
+    @Override
+    public CustomerDto fetchAccount(String mobileNumber) {
+        Customer customer = customerRepository.findByMobileNumber(mobileNumber).orElseThrow(
+                () -> new ResourceNotFoundException("Customer", "mobileNumber", mobileNumber)
+        );
+        Account account = accountRepository.findByCustomerId(customer.getCustomerId()).orElseThrow(
+                () -> new ResourceNotFoundException("Account", "id", customer.getCustomerId().toString())
+        );
+        CustomerDto fetchedCustomer = new CustomerDto();
+        CustomerMapper.mapToCustomerDto(customer, fetchedCustomer);
+        AccountMapper.mapToAccountDto(account, fetchedCustomer.getAccountsDto());
+        return fetchedCustomer;
+    }
+
+    @Override
+    public boolean updateAccount(CustomerDto customerDto) {
+        boolean isUpdated = false;
+        AccountDto accountDto = customerDto.getAccountsDto();
+        if (accountDto !=null ){
+            Account account = accountRepository.findByAccountNumber(accountDto.getAccountNumber()).orElseThrow(
+                    () -> new ResourceNotFoundException("Account", "Number", accountDto.getAccountNumber().toString())
+            );
+            AccountMapper.mapToAccount(accountDto, account);
+            accountRepository.save(account);
+
+            Customer customer = customerRepository.findByMobileNumber(customerDto.getMobileNumber()).orElseThrow(
+                    () -> new ResourceNotFoundException("Customer", "Mobile Number", customerDto.getMobileNumber().toString())
+            );
+            CustomerMapper.mapToCustomer(customerDto, customer);
+            customerRepository.save(customer);
+            isUpdated = true;
+        }
+        return isUpdated;
     }
 
     /**
@@ -58,4 +105,6 @@ public  class AccountServiceProcessImpl implements IAccountService {
         newAccount.setCreatedBy("Anonymous");
         return newAccount;
     }
+
+
 }
