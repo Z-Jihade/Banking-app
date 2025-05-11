@@ -50,7 +50,7 @@ public  class AccountServiceProcessImpl implements IAccountService {
     }
 
     /**
-     * 
+     *
      * @param mobileNumber
      * @return
      */
@@ -66,6 +66,25 @@ public  class AccountServiceProcessImpl implements IAccountService {
         CustomerMapper.mapToCustomerDto(customer, fetchedCustomer);
         AccountMapper.mapToAccountDto(account, fetchedCustomer.getAccountsDto());
         return fetchedCustomer;
+    }
+
+
+
+    /**
+     *
+     * @param customer
+     * @return
+     */
+    private Account createNewAccount(Customer customer){
+        Account newAccount = new Account();
+        newAccount.setCustomerId(customer.getCustomerId());
+        long randomAccNumber = 1000000000L + new Random().nextInt(900000000);
+        newAccount.setAccountNumber(randomAccNumber);
+        newAccount.setAccountType(AccountConstants.SAVINGS);
+        newAccount.setBranchAddress(AccountConstants.ADDRESS);
+        newAccount.setCreatedAt(LocalDateTime.now());
+        newAccount.setCreatedBy("Anonymous");
+        return newAccount;
     }
 
     @Override
@@ -89,22 +108,14 @@ public  class AccountServiceProcessImpl implements IAccountService {
         return isUpdated;
     }
 
-    /**
-     *
-     * @param customer
-     * @return
-     */
-    private Account createNewAccount(Customer customer){
-        Account newAccount = new Account();
-        newAccount.setCustomerId(customer.getCustomerId());
-        long randomAccNumber = 1000000000L + new Random().nextInt(900000000);
-        newAccount.setAccountNumber(randomAccNumber);
-        newAccount.setAccountType(AccountConstants.SAVINGS);
-        newAccount.setBranchAddress(AccountConstants.ADDRESS);
-        newAccount.setCreatedAt(LocalDateTime.now());
-        newAccount.setCreatedBy("Anonymous");
-        return newAccount;
+    @Override
+    public boolean deleteAccount(String mobileNumber) {
+        Customer customer = customerRepository.findByMobileNumber(mobileNumber).orElseThrow(
+                () -> new ResourceNotFoundException("Customer", "MobileNumber", mobileNumber)
+        );
+        accountRepository.deleteByCustomerId(customer.getCustomerId());
+        customerRepository.deleteById(customer.getCustomerId());
+        return true;
     }
-
 
 }
