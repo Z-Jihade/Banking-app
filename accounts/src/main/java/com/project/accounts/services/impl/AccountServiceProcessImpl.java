@@ -43,8 +43,6 @@ public  class AccountServiceProcessImpl implements IAccountService {
             throw new CustomerAlreadyExistsException("Customer already registered with given mobileNumber "
                     +customerDto.getMobileNumber());
         }
-        createdCustomer.setCreatedAt(LocalDateTime.now());
-        createdCustomer.setCreatedBy("Anonymous");
         Customer savedCustomer = customerRepository.save(createdCustomer);
         accountRepository.save(createNewAccount(savedCustomer));
     }
@@ -64,7 +62,7 @@ public  class AccountServiceProcessImpl implements IAccountService {
         );
         CustomerDto fetchedCustomer = new CustomerDto();
         CustomerMapper.mapToCustomerDto(customer, fetchedCustomer);
-        AccountMapper.mapToAccountDto(account, fetchedCustomer.getAccountsDto());
+        fetchedCustomer.setAccountsDto(AccountMapper.mapToAccountDto(account, new AccountDto()));
         return fetchedCustomer;
     }
 
@@ -82,8 +80,6 @@ public  class AccountServiceProcessImpl implements IAccountService {
         newAccount.setAccountNumber(randomAccNumber);
         newAccount.setAccountType(AccountConstants.SAVINGS);
         newAccount.setBranchAddress(AccountConstants.ADDRESS);
-        newAccount.setCreatedAt(LocalDateTime.now());
-        newAccount.setCreatedBy("Anonymous");
         return newAccount;
     }
 
