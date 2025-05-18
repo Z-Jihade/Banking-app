@@ -1,4 +1,4 @@
-package com.project.cards.repository;
+package com.project.cards.repositories;
 
 import com.project.cards.entities.Cards;
 import org.springframework.data.jpa.repository.JpaRepository;

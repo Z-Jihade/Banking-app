@@ -6,7 +6,7 @@ import com.project.cards.entities.Cards;
 import com.project.cards.exceptions.CardAlreadyExistsException;
 import com.project.cards.exceptions.ResourceNotFoundException;
 import com.project.cards.mappers.CardsMapper;
-import com.project.cards.repository.CardsRepository;
+import com.project.cards.repositories.CardsRepository;
 import com.project.cards.services.ICardsService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
